@@ -242,12 +242,6 @@ Testes: `python -m unittest discover -s tests -v`
 - **Código:** faça um fork, crie um branch e abra um pull request. Rode os testes antes: `python -m unittest discover -s tests`.
 - **Novas memórias:** pull requests no `ch341studio/chips/spi_flash.json` são bem-vindos (informe o datasheet).
 
-## Publicar uma versão nova (para o mantenedor)
-
-1. Atualize `__version__` em `ch341studio/__init__.py` e o `CHANGELOG.md`.
-2. Crie uma tag com o mesmo número, por exemplo `v0.2.3`, e envie para o GitHub.
-3. O GitHub Actions gera os instaladores de Windows e Linux e cria a Release com eles anexados.
-
 ## Licença
 
 MIT — veja `LICENSE`.
