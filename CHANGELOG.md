@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.2.3
+- Linux agora é distribuído como **AppImage** (um arquivo único, sem instalar).
+- Na primeira abertura do AppImage, o programa oferece criar o atalho na área de trabalho e no menu e instalar a regra USB do CH341A; o atalho se corrige sozinho se o arquivo mudar de pasta.
+- Novos itens no menu Ferramentas (Linux): atalho e regra USB.
+
 ## 0.2.2
 - Instaladores: Windows (Inno Setup) e Linux (`instalar.sh`), com atalho na área de trabalho e no menu.
 - Ícone do programa.

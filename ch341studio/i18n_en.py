@@ -362,4 +362,23 @@ EN = {
     "{n} ocorrência(s). Clique numa linha para ir até ela.": "{n} match(es). Click a row to jump to it.",
     "(mostrando as primeiras 1000)": "(showing the first 1000)",
     "{i} de {n}: {t}": "{i} of {n}: {t}",
+    # --- AppImage / Linux
+    "Atalho na área de trabalho e no menu (Linux)": "Desktop and menu shortcut (Linux)",
+    "Instalar regra USB do CH341A (Linux)": "Install CH341A USB rule (Linux)",
+    "O arquivo do programa mudou de pasta: atalhos atualizados.": "The program file was moved: shortcuts updated.",
+    "Criar atalho do CH341 Studio na área de trabalho e no menu de aplicativos?\n\nVocê também pode fazer isso depois em Ferramentas.":
+        "Create a CH341 Studio shortcut on the desktop and in the applications menu?\n\nYou can also do this later from Tools.",
+    "Não foi possível criar o atalho: {e}": "Could not create the shortcut: {e}",
+    "Atalho criado: {p}": "Shortcut created: {p}",
+    "Não encontrei a pasta da área de trabalho; o atalho ficou só no menu.": "Desktop folder not found; the shortcut was added to the menu only.",
+    "Esta opção é para a versão AppImage. Na versão instalada pelo instalador, o atalho já foi criado na instalação.":
+        "This option is for the AppImage version. With the installer version, the shortcut was created during installation.",
+    "O atalho já existe.\n\nSim: recriar o atalho (ex.: se você apagou o da área de trabalho).\nNão: remover o atalho da área de trabalho e do menu.":
+        "The shortcut already exists.\n\nYes: recreate it (e.g. if you deleted the desktop one).\nNo: remove it from the desktop and the menu.",
+    "Atalhos removidos: {p}": "Shortcuts removed: {p}",
+    "A regra USB do CH341A já está instalada.": "The CH341A USB rule is already installed.",
+    "Instalar a regra USB do CH341A? Ela permite usar o gravador sem ser administrador (o sistema vai pedir a sua senha uma vez).":
+        "Install the CH341A USB rule? It lets you use the programmer without being an administrator (the system will ask for your password once).",
+    "Regra USB instalada. Desconecte e reconecte o gravador.": "USB rule installed. Unplug and replug the programmer.",
+    "A regra USB não foi instalada.": "The USB rule was not installed.",
 }

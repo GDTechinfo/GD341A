@@ -64,7 +64,7 @@ Comment=Gravador de memórias SPI/I2C com CH341A — GDTech Informática
 Exec="$DEST/CH341Studio"
 Icon=$DEST/$APP_ID.png
 Terminal=false
-Categories=Development;Electronics;Utility;
+Categories=Development;Utility;
 Keywords=ch341a;bios;spi;eeprom;flash;programmer;gravador;
 StartupWMClass=$APP_ID
 DESK

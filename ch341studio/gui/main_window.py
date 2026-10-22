@@ -1,6 +1,7 @@
 """Janela principal do CH341 Studio."""
 
 import os
+import sys
 import time
 from datetime import datetime
 
@@ -15,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from .. import (APP_NAME, AUTHOR, LINKS, __version__, benchmark, chipdb, chipupdate, fileio, health,
                 identify, intel)
+from .. import integration
 from ..history import History
 from ..i18n import tr
 from ..backends import BACKENDS, create_backend
@@ -98,6 +100,8 @@ class MainWindow(QMainWindow):
         self._update_db_label()
         if self.ck_autoupd.isChecked() and chipupdate.due():
             QTimer.singleShot(1500, lambda: self.update_chip_db(silent=True))
+        if integration.appimage_path():
+            QTimer.singleShot(800, lambda: self._appimage_check())
 
     # ================================================================ UI
     def _build_ui(self):
@@ -442,7 +446,11 @@ class MainWindow(QMainWindow):
                 ("bench", "Benchmark do gravador", self.tool_benchmark),
                 ("history", "Histórico de serviços…", self.tool_history),
                 (None, None, None),
-                ("lang", "Idioma: English / Português", self.tool_language)):
+                ("lang", "Idioma: English / Português", self.tool_language)) + (
+                ((None, None, None),
+                 ("shortcut", "Atalho na área de trabalho e no menu (Linux)", self.tool_shortcut),
+                 ("udev", "Instalar regra USB do CH341A (Linux)", self.tool_udev))
+                if sys.platform.startswith("linux") else ()):
             if key is None:
                 self.tools_menu.addSeparator()
                 continue
@@ -1317,6 +1325,85 @@ class MainWindow(QMainWindow):
             self._hist("Benchmark", None, res.summary())
 
         self._run(tr("Benchmark"), job, done, alert=tr("Benchmark concluído"))
+
+    # ------------------------------------------------------------ Linux / AppImage
+    def _appimage_check(self):
+        """Primeira abertura do AppImage: oferece criar atalho; corrige se o arquivo mudou de lugar."""
+        try:
+            if integration.refresh_if_moved():
+                self.log(tr("O arquivo do programa mudou de pasta: atalhos atualizados."), "muted")
+                return
+            if integration.is_integrated() or self.settings.value("appimage_ask", "yes") == "no":
+                return
+        except Exception:
+            return
+        r = QMessageBox.question(
+            self, APP_NAME,
+            tr("Criar atalho do CH341 Studio na área de trabalho e no menu de aplicativos?\n\n"
+               "Você também pode fazer isso depois em Ferramentas."),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if r != QMessageBox.StandardButton.Yes:
+            self.settings.setValue("appimage_ask", "no")
+            return
+        self._do_integrate()
+        if not integration.udev_installed():
+            self.tool_udev(ask=True)
+
+    def _do_integrate(self):
+        try:
+            created = integration.integrate(desktop=True)
+        except Exception as e:
+            self._warn(tr("Não foi possível criar o atalho: {e}", e=e))
+            return
+        self.settings.setValue("appimage_ask", "no")
+        self.log(tr("Atalho criado: {p}", p=", ".join(created)), "ok")
+        if not any(p != integration.menu_file() for p in created):
+            self.log(tr("Não encontrei a pasta da área de trabalho; o atalho ficou só no menu."), "warn")
+
+    def tool_shortcut(self):
+        if not integration.appimage_path():
+            QMessageBox.information(
+                self, APP_NAME,
+                tr("Esta opção é para a versão AppImage. Na versão instalada pelo instalador, "
+                   "o atalho já foi criado na instalação."))
+            return
+        if integration.is_integrated():
+            r = QMessageBox.question(
+                self, APP_NAME,
+                tr("O atalho já existe.\n\nSim: recriar o atalho (ex.: se você apagou o da área de trabalho).\n"
+                   "Não: remover o atalho da área de trabalho e do menu."),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No |
+                QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Yes)
+            if r == QMessageBox.StandardButton.No:
+                removed = integration.remove_integration()
+                self.log(tr("Atalhos removidos: {p}", p=", ".join(removed) or "—"), "ok")
+                return
+            if r != QMessageBox.StandardButton.Yes:
+                return
+        self._do_integrate()
+
+    def tool_udev(self, ask: bool = False):
+        if integration.udev_installed():
+            if not ask:
+                QMessageBox.information(self, APP_NAME, tr("A regra USB do CH341A já está instalada."))
+            return
+        if ask:
+            r = QMessageBox.question(
+                self, APP_NAME,
+                tr("Instalar a regra USB do CH341A? Ela permite usar o gravador sem ser administrador "
+                   "(o sistema vai pedir a sua senha uma vez)."),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes)
+            if r != QMessageBox.StandardButton.Yes:
+                return
+        ok, msg = integration.install_udev_rule()
+        if ok:
+            self.log(tr("Regra USB instalada. Desconecte e reconecte o gravador."), "ok")
+            QMessageBox.information(self, APP_NAME, tr("Regra USB instalada. Desconecte e reconecte o gravador."))
+        else:
+            self.log(tr("A regra USB não foi instalada."), "warn")
+            self._warn(tr("A regra USB não foi instalada.") + "\n\n" + msg)
 
     def tool_language(self):
         cur = self.settings.value("lang", "pt")

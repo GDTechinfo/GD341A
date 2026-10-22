@@ -209,3 +209,28 @@ class TextSearchTests(unittest.TestCase):
         self.assertEqual(len(TS.search(d, "version", case_sensitive=True)), 0)
         self.assertEqual(len(TS.search(d, "version", utf16=False)), 1)
         self.assertEqual(TS.search_hex(d, "56 65 72")[0].offset, 65)
+
+
+class AppImageIntegrationTests(unittest.TestCase):
+    def test_shortcuts(self):
+        from unittest import mock
+        from ch341studio import integration as I
+        tmp = tempfile.mkdtemp()
+        home = os.path.join(tmp, "home")
+        desk = os.path.join(home, "Desktop")
+        os.makedirs(desk)
+        app = os.path.join(tmp, "CH341Studio.AppImage")
+        open(app, "w").close()
+        env = {"HOME": home, "APPIMAGE": app, "XDG_DATA_HOME": ""}
+        with mock.patch.dict(os.environ, env), mock.patch.object(I, "desktop_dir", lambda: desk), \
+                mock.patch.object(I.sys, "platform", "linux"):
+            self.assertFalse(I.is_integrated())
+            created = I.integrate()
+            self.assertEqual(len(created), 2)
+            self.assertEqual(I.integrated_exec(), app)
+            new = os.path.join(tmp, "novo.AppImage")
+            os.rename(app, new)
+            os.environ["APPIMAGE"] = new
+            self.assertTrue(I.refresh_if_moved())
+            self.assertIn(new, open(os.path.join(desk, "ch341studio.desktop")).read())
+            self.assertEqual(len(I.remove_integration()), 3)

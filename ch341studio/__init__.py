@@ -3,7 +3,7 @@
 Criado por GDTech Informática.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 APP_NAME = "CH341 Studio"
 AUTHOR = "GDTech Informática"
 LINKS = {

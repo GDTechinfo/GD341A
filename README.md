@@ -11,7 +11,7 @@ Software moderno e open source para o gravador **CH341A** — Windows e Linux.
 Baixe a versão mais recente na página **[Releases](../../releases)**:
 
 - **Windows:** `CH341Studio-<versão>-instalador-windows.exe`. Execute e siga o instalador; ele cria o atalho na área de trabalho.
-- **Linux:** `CH341Studio-<versão>-linux-x86_64.tar.gz`. Extraia e rode `./instalar.sh`.
+- **Linux:** `CH341Studio-<versão>-x86_64.AppImage`. Um arquivo só, sem instalar: clique com o botão direito → Propriedades → marque **"Permitir executar como programa"** (ou `chmod +x` no terminal) e abra com dois cliques. Na primeira vez, o programa oferece criar o atalho na área de trabalho e no menu e instalar a regra USB do CH341A.
 
 Depois de instalar, escolha o driver (veja [Instalação](#instalação)) e clique em **Conectar**. Sem gravador? Use o modo **Simulador** para conhecer o programa.
 
@@ -85,7 +85,14 @@ Depois reconecte o gravador.
   - cria atalho na área de trabalho (opção marcada por padrão) e no menu Iniciar;
   - aparece em "Aplicativos instalados", para desinstalar pelo Windows.
 
-**Linux** — `./build_instalador_linux.sh`
+**Linux (AppImage)** — `./build_appimage.sh`
+- Gera `dist/CH341Studio-<versão>-x86_64.AppImage`, um arquivo único que roda na maioria das distros, sem instalar nada.
+- Na primeira abertura, o programa oferece criar o atalho na área de trabalho e no menu (apontando para o AppImage) e instalar a regra USB.
+- Se você mover o arquivo de pasta, o atalho é corrigido sozinho na próxima abertura.
+- Os mesmos itens ficam em **Ferramentas → Atalho na área de trabalho e no menu (Linux)** e **Ferramentas → Instalar regra USB do CH341A (Linux)**.
+- Se o AppImage não abrir numa distro sem FUSE: `./CH341Studio-*.AppImage --appimage-extract-and-run`.
+
+**Linux (pacote com instalador, alternativa)** — `./build_instalador_linux.sh`
 - Gera `dist/CH341Studio-<versão>-linux-x86_64.tar.gz`. Quem recebe faz `tar xzf ...`, entra na pasta e roda `./instalar.sh`.
 - O instalador:
   - instala em `~/.local/share/ch341studio` (sem senha), ou em `/opt` com `--sistema`;
@@ -93,7 +100,7 @@ Depois reconecte o gravador.
   - cria o comando `ch341studio` no terminal;
   - oferece instalar a regra USB do CH341A.
 - Para remover: `desinstalar.sh`.
-- Gere o pacote numa distro mais antiga que as dos usuários (por exemplo Ubuntu 22.04), porque o executável depende da versão da glibc de onde foi gerado.
+- Nos dois casos, gere numa distro mais antiga que as dos usuários (por exemplo Ubuntu 22.04), porque o executável depende da versão da glibc de onde foi gerado. O GitHub Actions já faz isso.
 
 ## Gerar o executável
 
