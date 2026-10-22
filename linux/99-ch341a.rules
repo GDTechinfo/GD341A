@@ -1,0 +1,3 @@
+# CH341A (modo SPI/I2C) — permite acesso sem root
+# Instalar:  sudo cp 99-ch341a.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5512", MODE="0666", TAG+="uaccess"

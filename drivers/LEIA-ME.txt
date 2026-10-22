@@ -1,0 +1,1 @@
+Coloque aqui CH341DLLA64.DLL (do pacote CH341PAR da WCH) para usar o modo CH341DLL no Windows.

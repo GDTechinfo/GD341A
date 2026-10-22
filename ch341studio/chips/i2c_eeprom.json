@@ -1,0 +1,16 @@
+{
+  "_comment": "EEPROMs I2C 24Cxx. size em bytes, page = tamanho da página de escrita (valor conservador), addr = bytes de endereço interno.",
+  "chips": [
+    {"name": "24C01", "size": 128, "page": 8, "addr": 1},
+    {"name": "24C02", "size": 256, "page": 8, "addr": 1},
+    {"name": "24C04", "size": 512, "page": 16, "addr": 1},
+    {"name": "24C08", "size": 1024, "page": 16, "addr": 1},
+    {"name": "24C16", "size": 2048, "page": 16, "addr": 1},
+    {"name": "24C32", "size": 4096, "page": 32, "addr": 2},
+    {"name": "24C64", "size": 8192, "page": 32, "addr": 2},
+    {"name": "24C128", "size": 16384, "page": 64, "addr": 2},
+    {"name": "24C256", "size": 32768, "page": 64, "addr": 2},
+    {"name": "24C512", "size": 65536, "page": 128, "addr": 2},
+    {"name": "24C1024 / 24M01", "size": 131072, "page": 256, "addr": 2}
+  ]
+}
