@@ -14,6 +14,7 @@ python3 -m PyInstaller --noconfirm --clean --windowed --name CH341Studio \
   --add-data "$PWD/ch341studio/chips:ch341studio/chips" \
   --add-data "$PWD/ch341studio/assets:ch341studio/assets" \
   --collect-all libusb_package \
+  --collect-data certifi \
   run.py
 rm -rf "$WORK"
 

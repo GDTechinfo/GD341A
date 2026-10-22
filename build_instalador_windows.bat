@@ -17,6 +17,7 @@ python -m PyInstaller --noconfirm --clean --windowed --name CH341Studio ^
   --add-data "%~dp0ch341studio\chips;ch341studio\chips" ^
   --add-data "%~dp0ch341studio\assets;ch341studio\assets" ^
   --collect-all libusb_package ^
+  --collect-data certifi ^
   run.py || goto :erro
 rmdir /s /q "%WORK%" 2>nul
 if exist drivers\CH341DLLA64.DLL (

@@ -1,5 +1,10 @@
 # Histórico de versões
 
+## 0.2.4
+- Corrige a atualização do banco de chips em algumas distros Linux (erro de certificado SSL): os certificados agora vão embutidos no programa, com a verificação de segurança sempre ligada.
+- Mensagem clara quando nenhuma fonte do banco de chips pôde ser baixada.
+- Gravação sem mudanças agora avisa "nada para gravar: o chip já tinha esse conteúdo".
+
 ## 0.2.3
 - Linux agora é distribuído como **AppImage** (um arquivo único, sem instalar).
 - Na primeira abertura do AppImage, o programa oferece criar o atalho na área de trabalho e no menu e instalar a regra USB do CH341A; o atalho se corrige sozinho se o arquivo mudar de pasta.

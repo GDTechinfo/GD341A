@@ -381,4 +381,6 @@ EN = {
         "Install the CH341A USB rule? It lets you use the programmer without being an administrator (the system will ask for your password once).",
     "Regra USB instalada. Desconecte e reconecte o gravador.": "USB rule installed. Unplug and replug the programmer.",
     "A regra USB não foi instalada.": "The USB rule was not installed.",
+    "Nada para gravar: o chip já tinha exatamente esse conteúdo.": "Nothing to write: the chip already had exactly this content.",
+    "O chip já tinha esse conteúdo — nada precisou ser gravado.": "The chip already had this content — nothing needed to be written.",
 }

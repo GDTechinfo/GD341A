@@ -11,6 +11,7 @@ python -m PyInstaller --noconfirm --clean --windowed --onefile --name CH341Studi
   --add-data "%~dp0ch341studio\assets;ch341studio\assets" ^
   --icon "%~dp0ch341studio\assets\icon.ico" ^
   --collect-all libusb_package ^
+  --collect-data certifi ^
   run.py || goto :erro
 rmdir /s /q "%WORK%" 2>nul
 if exist build\CH341Studio rmdir /s /q build 2>nul

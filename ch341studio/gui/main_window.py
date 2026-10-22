@@ -1095,7 +1095,10 @@ class MainWindow(QMainWindow):
             stats, vr, backup_path, retries = res
             if backup_path:
                 self.log(tr("Backup do conteúdo anterior salvo em {p}", p=backup_path), "muted")
-            if stats:
+            if stats and not (stats.erased_sectors or stats.erased_blocks or stats.programmed_pages):
+                self.log(tr("Nada para gravar: o chip já tinha exatamente esse conteúdo."), "ok")
+                self._alert_text = tr("O chip já tinha esse conteúdo — nada precisou ser gravado.")
+            elif stats:
                 self.log(tr("Gravação concluída: {s} setor(es) e {b} bloco(s) apagados, {p} página(s) gravadas.",
                             s=stats.erased_sectors, b=stats.erased_blocks, p=stats.programmed_pages), "ok")
                 if retries:

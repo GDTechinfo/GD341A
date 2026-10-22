@@ -1,3 +1,4 @@
 PySide6>=6.5
 pyusb>=1.2.1
 libusb-package>=1.0.26
+certifi>=2024.2.2

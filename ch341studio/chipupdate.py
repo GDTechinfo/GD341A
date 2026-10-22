@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import ssl
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -51,9 +52,43 @@ MAX_SPI = 256 * 1024 * 1024
 
 
 # ============================================================ download
+# Arquivos de certificados (CA) usados pelas distros Linux mais comuns. O Python embutido
+# no AppImage/executável procura só no caminho da máquina onde foi gerado, que muda de
+# distro para distro — por isso carregamos também estes e o pacote certifi embutido.
+SYSTEM_CA_FILES = (
+    "/etc/ssl/certs/ca-certificates.crt",                 # Debian, Ubuntu, Mint, Arch, Gentoo
+    "/etc/pki/tls/certs/ca-bundle.crt",                   # Fedora, RHEL, CentOS
+    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  # Fedora/RHEL (novo)
+    "/etc/ssl/ca-bundle.pem",                             # openSUSE
+    "/etc/ssl/cert.pem",                                  # Alpine, macOS, BSD
+)
+_SSL_CTX = None
+
+
+def ssl_context() -> ssl.SSLContext:
+    """Contexto TLS com verificação de certificado SEMPRE ligada e CAs de várias fontes."""
+    global _SSL_CTX
+    if _SSL_CTX is not None:
+        return _SSL_CTX
+    ctx = ssl.create_default_context()          # certificados padrão do sistema
+    try:
+        import certifi                          # certificados embutidos no programa
+        ctx.load_verify_locations(cafile=certifi.where())
+    except Exception:
+        pass
+    for path in SYSTEM_CA_FILES:
+        if os.path.isfile(path):
+            try:
+                ctx.load_verify_locations(cafile=path)
+            except (ssl.SSLError, OSError):
+                pass
+    _SSL_CTX = ctx
+    return ctx
+
+
 def _fetch(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+    with urllib.request.urlopen(req, timeout=TIMEOUT, context=ssl_context()) as r:
         return r.read()
 
 
@@ -359,6 +394,9 @@ class UpdateReport:
 
     def summary(self) -> str:
         parts = []
+        if not self.ok_sources and not (self.total_spi or self.total_i2c):
+            return ("não foi possível baixar nenhuma fonte (sem internet ou bloqueio de rede); "
+                    "usando só o banco embutido")
         if self.first_time:
             parts.append(f"banco baixado: {self.total_spi} SPI e {self.total_i2c} EEPROM I²C")
             if self.failed:

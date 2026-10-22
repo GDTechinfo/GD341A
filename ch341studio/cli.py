@@ -184,8 +184,11 @@ def main(argv=None):
                 stats, vr = dev.write(data, smart=not args.full, verify=not args.no_verify,
                                       auto_unprotect=args.unprotect)
                 bar.end()
-                print(f"Setores apagados: {stats.erased_sectors}, blocos: {stats.erased_blocks}, "
-                      f"páginas gravadas: {stats.programmed_pages}")
+                if not (stats.erased_sectors or stats.erased_blocks or stats.programmed_pages):
+                    print("Nada para gravar: o chip já tinha exatamente esse conteúdo.")
+                else:
+                    print(f"Setores apagados: {stats.erased_sectors}, blocos: {stats.erased_blocks}, "
+                          f"páginas gravadas: {stats.programmed_pages}")
             bar.end()
             if vr:
                 print(vr.summary())
