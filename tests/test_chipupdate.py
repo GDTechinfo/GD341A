@@ -146,6 +146,66 @@ class ParserTests(unittest.TestCase):
         self.assertTrue(all(c["volt"] in ("3.3", "1.8", "1.8-3.3") for c in m["spi"]))
 
 
+# formato do flashrom a partir de out/2026: tamanhos e tensões como apelidos (#define)
+FR_C_NEW_DEFS = b"""
+#define MV_1650\t\t1650
+#define MV_1950\t\t1950
+#define MV_2700\t\t2700
+#define MV_3600\t\t3600
+#define SIZE_1MiB\t1024
+#define SIZE_8MiB\t(8 * SIZE_1MiB)
+#define SPI_ERASERS_20_52_D8_60_C7(size)\t\\
+\t{ { .eraseblocks = { {4 * KiB, (size) / 4} } } }
+#include "flashchips/novo.c"
+"""
+FR_NOVO = b"""
+\t{
+\t\t.vendor\t\t= "Winbond",
+\t\t.name\t\t= "W25Q64JV-.Q",
+\t\t.bustype\t= BUS_SPI,
+\t\t.manufacture_id\t= WINBOND_NEX_ID,
+\t\t.model_id\t= 0x4017,
+\t\t.total_size\t= SIZE_8MiB,
+\t\t.page_size\t= 256,
+\t\t.feature_bits\t= FEATURE_WRSR_WREN | FEATURE_WRSR2,
+\t\t.probe\t\t= PROBE_SPI_RDID,
+\t\t.block_erasers\t= SPI_ERASERS_20_52_D8_60_C7(SIZE_8MiB),
+\t\t.write\t\t= SPI_CHIP_WRITE256,
+\t\t.voltage\t= {MV_2700, MV_3600},
+\t},
+\t{
+\t\t.vendor\t\t= "Winbond",
+\t\t.name\t\t= "W25Q64FW",
+\t\t.bustype\t= BUS_SPI,
+\t\t.manufacture_id\t= WINBOND_NEX_ID,
+\t\t.model_id\t= 0x6017,
+\t\t.total_size\t= SIZE_8MiB,
+\t\t.page_size\t= 256,
+\t\t.probe\t\t= PROBE_SPI_RDID,
+\t\t.write\t\t= SPI_CHIP_WRITE256,
+\t\t.voltage\t= {MV_1650, MV_1950},
+\t},
+"""
+
+
+class FlashromNewFormatTests(unittest.TestCase):
+    def test_macros_for_size_and_voltage(self):
+        files = {"include/flashchips.h": FR_H, "flashchips.c": FR_C_NEW_DEFS, "flashchips/novo.c": FR_NOVO}
+        r = {c["name"]: c for c in U.parse_flashrom(files)["spi"]}
+        self.assertEqual((r["W25Q64JV-.Q"]["id"], r["W25Q64JV-.Q"]["size"], r["W25Q64JV-.Q"]["volt"]),
+                         ("EF4017", 8192, "3.3"))
+        self.assertEqual(r["W25Q64FW"]["volt"], "1.8")
+        self.assertIn("sr2", r["W25Q64JV-.Q"]["flags"])
+
+    def test_c_int(self):
+        m = U.collect_macros("#define A 4\n#define B (A * 2)\n#define F(x) (x)\n#define C B + 0x10")
+        self.assertNotIn("F", m)
+        self.assertEqual(U._c_int("C", m), 24)
+        self.assertEqual(U._c_int("8 * MiB", m), 8192)
+        self.assertIsNone(U._c_int("DESCONHECIDO", m))
+        self.assertIsNone(U._c_int("__import__('os')", m))
+
+
 class UpdateFlowTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()

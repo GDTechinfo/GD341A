@@ -220,27 +220,75 @@ def parse_asprogrammer(data: bytes) -> dict:
     return {"spi": spi, "i2c": i2c}
 
 
+# total_size do flashrom é em KiB: "8 * MiB" = 8192
 _SIZE_UNITS = {"KiB": 1, "MiB": 1024}
+_TOKEN = re.compile(r"0[xX][0-9a-fA-F]+|\d+|[A-Za-z_]\w*|[()+\-*/]")
 
 
-def _c_int(expr: str, macros: dict) -> int | None:
-    expr = re.sub(r"/\*.*?\*/", "", expr).strip().rstrip(",").strip()
-    m = re.fullmatch(r"(\d+)\s*\*\s*(KiB|MiB)", expr)
-    if m:
-        return int(m.group(1)) * _SIZE_UNITS[m.group(2)]
-    if re.fullmatch(r"0[xX][0-9a-fA-F]+|\d+", expr):
-        return int(expr, 0)
-    if expr in macros:
-        return macros[expr]
-    return None
+def collect_macros(*texts: str) -> dict[str, str]:
+    """#defines simples (sem parâmetros) de um ou mais arquivos C: NOME -> texto do valor."""
+    macros: dict[str, str] = {}
+    for text in texts:
+        text = re.sub(r"\\\n", " ", text)                 # junta linhas continuadas com \
+        for m in re.finditer(r"^[ \t]*#define[ \t]+([A-Za-z_]\w*)(?![\w(])[ \t]*(.*)$", text, re.M):
+            val = re.sub(r"/\*.*?\*/|//.*$", "", m.group(2)).strip()
+            if val:
+                macros[m.group(1)] = val
+    return macros
+
+
+def _c_int(expr: str, macros: dict, depth: int = 0) -> int | None:
+    """Avalia uma expressão inteira simples de C (números, apelidos #define, + - * / e parênteses)."""
+    if expr is None or depth > 12:
+        return None
+    expr = re.sub(r"/\*.*?\*/|//.*$", "", str(expr)).strip().rstrip(",").strip()
+    if not expr:
+        return None
+    out = []
+    for tok in _TOKEN.findall(expr):
+        if tok[0].isalpha() or tok[0] == "_":
+            if tok in _SIZE_UNITS and tok not in macros:
+                out.append(str(_SIZE_UNITS[tok]))
+                continue
+            val = macros.get(tok)
+            if val is None:
+                return None
+            if isinstance(val, int):
+                out.append(str(val))
+                continue
+            sub = _c_int(val, macros, depth + 1)
+            if sub is None:
+                return None
+            out.append(str(sub))
+        elif tok[:2].lower() == "0x":
+            out.append(str(int(tok, 16)))
+        else:
+            out.append(tok)
+    # só sobram números, operadores e parênteses: avaliação segura
+    import ast
+    import operator as op
+    ops = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.FloorDiv: op.floordiv,
+           ast.Div: op.floordiv}
+
+    def ev(n):
+        if isinstance(n, ast.Constant) and isinstance(n.value, int):
+            return n.value
+        if isinstance(n, ast.BinOp) and type(n.op) in ops:
+            return ops[type(n.op)](ev(n.left), ev(n.right))
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.USub):
+            return -ev(n.operand)
+        raise ValueError
+    try:
+        return int(ev(ast.parse(" ".join(out), mode="eval").body))
+    except (ValueError, SyntaxError, ZeroDivisionError, TypeError):
+        return None
 
 
 def parse_flashrom(files: dict[str, bytes]) -> dict:
     """Lê as structs `flashchip` dos arquivos flashchips/*.c."""
-    header = files.get("include/flashchips.h", b"").decode("utf-8", "replace")
-    macros = {}
-    for name, val in re.findall(r"#define\s+(\w+)\s+(0[xX][0-9a-fA-F]+|\d+)\b", header):
-        macros[name] = int(val, 0)
+    dec = lambda k: files.get(k, b"").decode("utf-8", "replace")
+    # apelidos (#define) vêm do cabeçalho e do flashchips.c (ex.: SIZE_8MiB, MV_3600)
+    macros = collect_macros(dec("include/flashchips.h"), dec("flashchips.c"))
     spi = []
     for fname, raw in files.items():
         if not fname.startswith("flashchips/"):
@@ -296,11 +344,12 @@ def parse_flashrom(files: dict[str, bytes]) -> dict:
                         flags.add("en4b")
                     else:
                         continue  # só por registrador EAR: não suportado ainda
-            vm = re.search(r"\.voltage\s*=\s*\{\s*(\d+)\s*,\s*(\d+)\s*\}", body)
+            vm = re.search(r"\.voltage\s*=\s*\{\s*([^,{}]+?)\s*,\s*([^,{}]+?)\s*\}", body)
             volt = "3.3"
             if vm:
-                vmin, vmax = int(vm.group(1)), int(vm.group(2))
-                volt = "1.8" if vmax <= 2100 else ("1.8-3.3" if vmin <= 1800 else "3.3")
+                vmin, vmax = _c_int(vm.group(1), macros), _c_int(vm.group(2), macros)
+                if vmin is not None and vmax is not None:
+                    volt = "1.8" if vmax <= 2100 else ("1.8-3.3" if vmin <= 1800 else "3.3")
             page = _c_int(field("page_size"), macros) or 256
             spi.append(_spi(name.group(1), vendor.group(1), jedec, size, "flashrom", volt,
                             page if page in (64, 128, 256, 512) else 256,

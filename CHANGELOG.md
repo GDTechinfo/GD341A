@@ -1,5 +1,8 @@
 # Histórico de versões
 
+## 0.2.5
+- Corrige a atualização do banco de chips a partir do flashrom, que mudou o formato dos arquivos em 22/10/2026 (tamanhos e tensões agora como apelidos `SIZE_8MiB`, `MV_3600`). O conversor passou a entender esses apelidos de forma genérica.
+
 ## 0.2.4
 - Corrige a atualização do banco de chips em algumas distros Linux (erro de certificado SSL): os certificados agora vão embutidos no programa, com a verificação de segurança sempre ligada.
 - Mensagem clara quando nenhuma fonte do banco de chips pôde ser baixada.
